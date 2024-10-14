@@ -1,60 +1,68 @@
-const noteModel = require('../models/Notes.js');
-//TODO - Create a new Note
-//http://mongoosejs.com/docs/api.html#document_Document-save
-app.post('/notes', (req, res) => {
-    // Validate request
-    if(!req.body.content) {
-        return res.status(400).send({
-            message: "Note content can not be empty"
-        });
-    }
-    //TODO - Write your code here to save the note
-});
+const Note = require("../models/NotesModel.js");
 
-//TODO - Retrieve all Notes
-//http://mongoosejs.com/docs/api.html#find_find
-app.get('/notes', (req, res) => {
-    // Validate request
-    if(!req.body.content) {
-        return res.status(400).send({
-            message: "Note content can not be empty"
-        });
+module.exports = (app) => {
+  app.post("/notes", async (req, res) => {
+    try {
+      const { noteTitle, noteDescription, priority } = req.body;
+      if (!noteTitle || !noteDescription || !priority) {
+        return res.status(400).send({ message: "All fields are required" });
+      }
+      const note = new Note({ noteTitle, noteDescription, priority });
+      await note.save();
+      res.status(201).send(note);
+    } catch (error) {
+      res.status(500).send({ message: "ERROR" });
     }
-    //TODO - Write your code here to returns all note
-});
+  });
 
-//TODO - Retrieve a single Note with noteId
-//http://mongoosejs.com/docs/api.html#findbyid_findById
-app.get('/notes/:noteId', (req, res) => {
-    // Validate request
-    if(!req.body.content) {
-        return res.status(400).send({
-            message: "Note content can not be empty"
-        });
+  app.get("/notes", async (req, res) => {
+    try {
+      const notes = await Note.find();
+      res.status(200).send(notes);
+    } catch (error) {
+      res.status(500).send({ message: "ERROR" });
     }
-    //TODO - Write your code here to return onlt one note using noteid
-});
+  });
 
-//TODO - Update a Note with noteId
-//http://mongoosejs.com/docs/api.html#findbyidandupdate_findByIdAndUpdate
-app.put('/notes/:noteId', (req, res) => {
-    // Validate request
-    if(!req.body.content) {
-        return res.status(400).send({
-            message: "Note content can not be empty"
-        });
+  app.get("/notes/:noteId", async (req, res) => {
+    try {
+      const note = await Note.findById(req.params.noteId);
+      if (!note) {
+        return res.status(404).send({ message: "not found" });
+      }
+      res.status(200).send(note);
+    } catch (error) {
+      res.status(500).send({ message: "ERROR" });
     }
-    //TODO - Write your code here to update the note using noteid
-});
+  });
 
-//TODO - Delete a Note with noteId
-//http://mongoosejs.com/docs/api.html#findbyidandremove_findByIdAndRemove
-app.delete('/notes/:noteId', (req, res) => {
-    // Validate request
-    if(!req.body.content) {
-        return res.status(400).send({
-            message: "Note content can not be empty"
-        });
+  app.put("/notes/:noteId", async (req, res) => {
+    try {
+      const { noteTitle, noteDescription, priority } = req.body;
+      const note = await Note.findByIdAndUpdate(req.params.noteId, {
+        noteTitle,
+        noteDescription,
+        priority,
+        dateUpdated: Date.now(),
+      });
+      if (!note) {
+        return res.status(404).send({ message: "not found" });
+      }
+      res.status(200).send(note);
+    } catch (error) {
+      res.status(500).send({ message: "ERROR" });
     }
-    //TODO - Write your code here to delete the note using noteid
-});
+  });
+
+  app.delete("/notes/:noteId", async (req, res) => {
+    try {
+      const note = await Note.findByIdAndRemove(req.params.noteId);
+      if (!note) {
+        return res.status(404).send({ message: "not found" });
+      }
+      res.status(200).send({ message: "deleted successfully" });
+    } catch (error) {
+      res.status(500).send({ message: "ERROR" });
+    }
+  });
+};
